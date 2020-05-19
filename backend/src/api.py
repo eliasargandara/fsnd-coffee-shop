@@ -62,6 +62,16 @@ def retrieve_drinks():
         where drinks is the list of drinks or appropriate status code
         indicating reason for failure
 '''
+@app.route('/drinks-detail')
+@requires_auth('get:drinks-detail')
+def retrieve_drink_details(payload):
+    drinks = Drink.query.all()
+    formatted_drinks = [drink.long() for drink in drinks]
+
+    return jsonify({
+        'success': True,
+        'drinks': formatted_drinks
+    })
 
 
 '''
