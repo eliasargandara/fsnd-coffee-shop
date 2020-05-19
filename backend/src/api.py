@@ -41,6 +41,15 @@ def after_request(response):
         where drinks is the list of drinks or appropriate status code
         indicating reason for failure
 '''
+@app.route('/drinks')
+def retrieve_drinks():
+    drinks = Drink.query.all()
+    formatted_drinks = [drink.short() for drink in drinks]
+
+    return jsonify({
+        'success': True,
+        'drinks': formatted_drinks
+    })
 
 
 '''
