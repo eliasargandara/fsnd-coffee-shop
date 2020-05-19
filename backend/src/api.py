@@ -1,4 +1,5 @@
 import os
+import traceback
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
@@ -109,30 +110,49 @@ Example error handling for unprocessable entity
 @app.errorhandler(422)
 def unprocessable(error):
     return jsonify({
-        "success": False,
-        "error": 422,
-        "message": "unprocessable"
+        'success': False,
+        'error': 422,
+        'message': (
+            'The request was well-formed but could not be'
+            ' processed due to semantic errors.')
     }), 422
 
 
-'''
-@TODO implement error handlers using the @app.errorhandler(error) decorator
-    each error handler should return (with approprate messages):
-             jsonify({
-                    "success": False,
-                    "error": 404,
-                    "message": "resource not found"
-                    }), 404
-
-'''
-
-'''
-@TODO implement error handler for 404
-    error handler should conform to general task above
-'''
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'success': False,
+        'error': 404,
+        'message': 'The server does not recognize the url.'
+    }), 404
 
 
-'''
-@TODO implement error handler for AuthError
-    error handler should conform to general task above
-'''
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({
+        'success': False,
+        'error': 405,
+        'message': 'The HTTP method is not allowed for the requested url.'
+    }), 405
+
+
+@app.errorhandler(AuthError)
+def auth_error(error):
+    return jsonify({
+        'success': False,
+        'error': error.error['code'],
+        'message': error.error['description']
+    }), error.status_code
+
+
+@app.errorhandler(Exception)
+def unexpected_error(error):
+    print(traceback.format_exc())
+    return jsonify({
+        'success': False,
+        'error': 500,
+        'message': (
+            'We apoligize. Our service seems to'
+            ' have experienced an unexpected error.'
+        )
+    }), 500
