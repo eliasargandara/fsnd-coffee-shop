@@ -100,6 +100,73 @@ def validate_create_drink_input(data):
     return input_errors
 
 
+def validate_update_drink_input(data):
+    input_errors = []
+
+    if 'title' in data and type(data['title']) is not str:
+        input_errors.append({
+            'attribute': 'title',
+            'type': 'invalid_type',
+            'message': expected_string.format('title')
+        })
+
+    if 'recipe' in data:
+        if type(data['recipe']) is not list:
+            input_errors.append({
+                'attribute': 'recipe',
+                'type': 'invalid_type',
+                'message': expected_objects_array.format('recipe')
+            })
+        else:
+            for index, item in enumerate(data['recipe']):
+                if 'color' not in item:
+                    input_errors.append({
+                        'attribute': f'recipe[{index}].color',
+                        'type': 'attribute_required',
+                        'message': attribute_required.format(
+                            f'recipe[{index}].color')
+                    })
+                elif type(item['color']) is not str:
+                    input_errors.append({
+                        'attribute': f'recipe[{index}].color',
+                        'type': 'invalid_type',
+                        'message': expected_string.format(
+                            f'recipe[{index}].color')
+                    })
+
+                if 'name' not in item:
+                    input_errors.append({
+                        'attribute': f'recipe[{index}].name',
+                        'type': 'attribute_required',
+                        'message': attribute_required(
+                            f'recipe[{index}].name')
+                    })
+                elif type(item['name']) is not str:
+                    input_errors.append({
+                        'attribute': f'recipe[{index}].name',
+                        'type': 'invalid_type',
+                        'message': expected_string.format(
+                            f'recipe[{index}].name')
+                    })
+
+                if 'parts' not in item:
+                    input_errors.append({
+                        'attribute': f'recipe[{index}].parts',
+                        'type': 'attribute_required',
+                        'message': attribute_required.format(
+                            f'recipe[{index}].parts')
+                    })
+                elif type(item['parts']) is not int:
+                    input_errors.append({
+                        'attribute': f'recipe[{index}].parts',
+                        'type': 'invalid_type',
+                        'message': expected_integer.format(
+                            f'recipe[{index}].parts')
+                    })
+
+    return input_errors
+
+
 '''
 @TODO uncomment the following line to initialize the datbase
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
@@ -223,6 +290,31 @@ def create_drink(payload):
         where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
+@app.route('/drinks/<id>', methods=['PATCH'])
+@requires_auth('patch:drinks')
+def update_drinks(payload, id):
+    data = request.get_json()
+    if not data:
+        abort(400)
+
+    input_errors = validate_update_drink_input(data)
+    if input_errors:
+        raise InvalidInput(input_errors)
+
+    drink = Drink.query.filter(Drink.id == id).one_or_none()
+    if not drink:
+        abort(404)
+
+    if 'title' in data:
+        drink.title = data['title']
+    if 'recipe' in data:
+        drink.recipe = json.dumps(data['recipe'])
+
+    drink.update()
+    return jsonify({
+        'success': True,
+        'drinks': [drink.long()]
+    })
 
 
 '''
