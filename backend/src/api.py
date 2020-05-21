@@ -45,14 +45,12 @@ def validate_create_drink_input(data):
             'message': attribute_required.format('recipe')
         })
     elif type(data['recipe']) is not list:
-        print('HERE')
         input_errors.append({
             'attribute': 'recipe',
             'type': 'invalid_type',
             'message': expected_objects_array.format('recipe')
         })
     else:
-        print('ALSO HERE')
         for index, item in enumerate(data['recipe']):
             if 'color' not in item:
                 input_errors.append({
@@ -180,9 +178,6 @@ def create_drink(payload):
     if not data:
         abort(400)
 
-    print(data['recipe'])
-    print(type(data['recipe']))
-
     input_errors = validate_create_drink_input(data)
     if input_errors:
         raise InvalidInput(input_errors)
@@ -241,6 +236,18 @@ def create_drink(payload):
         where id is the id of the deleted record or appropriate
         status code indicating reason for failure
 '''
+@app.route('/drinks/<id>', methods=['DELETE'])
+@requires_auth('delete:drinks')
+def delete_drink(payload, id):
+    drink = Drink.query.filter(Drink.id == id).one_or_none()
+    if not drink:
+        abort(404)
+
+    drink.delete()
+    return jsonify({
+        'success': True,
+        'delete': id
+    })
 
 
 # Error Handling
